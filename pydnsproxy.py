@@ -44,7 +44,11 @@ if "AUTH_BLOCK" in os.environ:
     auth_block = os.environ["AUTH_BLOCK"].split(",")
 if "PASSPHASE" in os.environ:
     passphase = os.environ["PASSPHASE"].strip()
-
+if "FILTER_EXIST_DNS" in os.environ:
+    if os.environ["FILTER_EXIST_DNS"].lower()[0] in ["t","y","1"]:
+        filter_exist_dns = True
+    else:
+        filter_exist_dns = False
 # IP Checker.
 def get_external_ip():
     if "EXT_IP" in os.environ:
