@@ -21,7 +21,18 @@ DNS Proxy + SNI/HTTP Proxy + Very Basic Authenticate
 Environment
 ===========
 
-This source is working with Python 3.4 + AsyncIO. you have to run in \*NIX include Linux as root permission.
+This source is working with Python 3.x + AsyncIO. you have to run in \*NIX include Linux as root permission.
+
+ifyou want to run with Docker, buildand launch.
+
+```
+docker build -t pydnsproxy .
+docker run -it --rm \
+  -p 53:53/udp -p 443:443 -p 80:80 \
+  -v `pwd`/dns.conf:/opt/dns.conf \
+  pydnsproxy
+#Volume mount and Port Binding.
+```
 
 Configuration
 =============
