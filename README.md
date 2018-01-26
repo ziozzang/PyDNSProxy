@@ -30,6 +30,10 @@ docker build -t pydnsproxy .
 docker run -it --rm \
   -p 53:53/udp -p 443:443 -p 80:80 \
   -v `pwd`/dns.conf:/opt/dns.conf \
+  -e "AUTH_LIST=10.2.3.4,10.9.8.7" \
+  -e "AUTH_BLOCK=10.3.4.0/24,192.4.5.0/24" \
+  -e "PASSPHASE=open.sesami" \
+  -e "EXT_IP=1.2.3.4" -e "SELF_IP=5.6.7.8" \
   pydnsproxy
 #Volume mount and Port Binding.
 ```
