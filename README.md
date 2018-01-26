@@ -36,6 +36,7 @@ docker run -it --rm \
   -e "EXT_IP=1.2.3.4" -e "SELF_IP=5.6.7.8" \
   pydnsproxy
 #Volume mount and Port Binding.
+# you can set upstream DNS server on specific docker, use "--dns=" option.
 ```
 
 Configuration
