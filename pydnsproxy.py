@@ -38,8 +38,17 @@ passphase = "open.the.gate.sesami"
 
 filter_exist_dns = True
 
+if "AUTH_LIST" in os.environ:
+    auth_list = os.environ["AUTH_LIST"].split(",")
+if "AUTH_BLOCK" in os.environ:
+    auth_block = os.environ["AUTH_BLOCK"].split(",")
+if "PASSPHASE" in os.environ:
+    passphase = os.environ["PASSPHASE"].strip()
+
 # IP Checker.
 def get_external_ip():
+    if "EXT_IP" in os.environ:
+        return os.environ["EXT_IP"]
     site = urllib.request.Request("http://checkip.dyndns.org/")
     cont = urllib.request.urlopen(site).read().decode("utf-8")
     grab = re.findall('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)', cont)
@@ -47,6 +56,8 @@ def get_external_ip():
     return address
 
 def get_local_ip():
+    if "SELF_IP" in os.environ:
+        return os.environ["SELF_IP"]
     return [(s.connect(('8.8.8.8', 80)), s.getsockname()[0], s.close()) \
        for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]
 
