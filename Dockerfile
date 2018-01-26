@@ -1,6 +1,7 @@
 FROM python:alpine
 
-RUN mkdir -p /opt
+# default "Redirect ALL"
+RUN mkdir -p /opt && echo "* self" > /opt/dns.conf
 COPY ./pydnsproxy.py /opt/
 WORKDIR /opt
 
