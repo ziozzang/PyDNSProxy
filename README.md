@@ -62,6 +62,20 @@ filter_exist_dns = True
 
 on dns.conf file, you can control dns record what to reply fake one. see dns.conf file.
 
+Matching Rules
+==============
+
+1. Matchings are sequancial.
+    * Block(No Result Returned) -> Exactly Match(Exactly Same Domain only) -> Forward Match(Ask upper DNS) -> Zone Match -> RegEx Match
+
+2. if one rule matched, ignored remains.
+
+3. There's 3 kinds of match type. partial match(match zone), exact match and regular expression match.
+    * Block : Partial Match
+    * Exact Match: Exact Match
+    * Forward : Partial Match
+    * Zone : Partial Match
+    * RegEx : RegEx.
 
 Special Thanks
 ==============
