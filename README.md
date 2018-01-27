@@ -23,7 +23,7 @@ Environment
 
 This source is working with Python 3.x + AsyncIO. you have to run in \*NIX include Linux as root permission.
 
-ifyou want to run with Docker, buildand launch.
+if you want to run with Docker, build and launch.
 
 ```
 docker build -t pydnsproxy .
@@ -59,6 +59,11 @@ passphase = "open.the.gate.sesami"
 ```
 filter_exist_dns = True
 ```
+
+4. if you want to allow any IP, set environment parameter "ALLOW_ANY" 
+
+5. if you want to run only DNS server (no sniproxy), set environment parameter "ONLY_DNS_SERVER"
+    * you can use go version SNIProxy: https://github.com/ziozzang/SimpleSNIProxy
 
 on dns.conf file, you can control dns record what to reply fake one. see dns.conf file.
 
