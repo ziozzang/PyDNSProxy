@@ -278,6 +278,8 @@ class ruleEngine:
         with open(file,'r') as rulefile:
             rules = rulefile.readlines()
             for rule in rules:
+                if len(rule.strip()) == 0: # Skip Empty Line
+                    continue
                 if rule[0] == "#": # Process Comment
                     continue
                 elif rule[0] == "-": # Blocking
