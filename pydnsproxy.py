@@ -221,7 +221,7 @@ class DNSResponse:
                     break
         if False == match_status:  # RegEx searching.
             for rule in self.rules.reblock_list:
-                result = rule[0].match(query.domain)
+                result = rule.match(query.domain)
                 if result is not None:
                     match_status = True
                     result_none = True
@@ -286,6 +286,10 @@ class ruleEngine:
                     self.forw_list.append(rule[1:].strip())
                     logging.debug('>> FORWARD: %s' % (rule[1:].strip(),))
                     continue
+                elif rule[0] == "^": # RegEx Block
+                    self.forw_list.append(rule[1:].strip())
+                    logging.debug('>> RE/BLOCK: %s' % (rule[1:].strip(),))
+                    continue
                 splitrule = rule.split()
                 if(len(splitrule)) <2:
                     continue
@@ -307,9 +311,6 @@ class ruleEngine:
                 elif rule[0] == "~":  # RegEx Allow
                     self.reallow_list.append([re.compile(splitrule[0][1:]),splitrule[1]])
                     logging.debug('>> RE/ALLOW: %s -> %s' % (splitrule[0], splitrule[1]))
-                elif rule[0] == "^":  # RegEx Block
-                    self.reblock_list.append([re.compile(splitrule[0][1:]),splitrule[1]])
-                    logging.debug('>> RE/BLOCK: %s -> %s' % (splitrule[0], splitrule[1]))
             n = str(len(rules))
             logging.debug(">> %s rules parsed" % n)
 
