@@ -395,13 +395,15 @@ if __name__ == '__main__':
     rules = ruleEngine(path)
 
     server_dns = DNSServers(ctl, "0.0.0.0", 53)
-    server_443 = ProxyServers(ctl, None, 443)
-    server_80  = ProxyServers(ctl, None, 80)
+    if not ("ONLY_DNS_SERVER" in os.environ):
+        server_443 = ProxyServers(ctl, None, 443)
+        server_80  = ProxyServers(ctl, None, 80)
 
     try:
         server_dns.warmup()
-        server_443.warmup()
-        server_80.warmup()
+        if not ("ONLY_DNS_SERVER" in os.environ):
+            server_443.warmup()
+            server_80.warmup()
         ctl.start()
     except KeyboardInterrupt:
         pass # Press Ctrl+C to stop
