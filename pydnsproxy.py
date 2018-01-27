@@ -225,7 +225,7 @@ class DNSResponse:
                 if result is not None:
                     match_status = True
                     result_none = True
-                    logging.debug(">> Matched Request(RE/BLOCK): " + query.domain + ":" + ip)
+                    logging.debug(">> Matched Request(RE/BLOCK): " + query.domain + ": BLOCKED")
                     break
         if (filter_exist_dns and match_status) and (result_none == False):  # Check Really domain exist, if flag set
             try:
@@ -287,7 +287,7 @@ class ruleEngine:
                     logging.debug('>> FORWARD: %s' % (rule[1:].strip(),))
                     continue
                 elif rule[0] == "^": # RegEx Block
-                    self.forw_list.append(rule[1:].strip())
+                    self.reblock_list.append(re.compile(rule[1:].strip()))
                     logging.debug('>> RE/BLOCK: %s' % (rule[1:].strip(),))
                     continue
                 splitrule = rule.split()
