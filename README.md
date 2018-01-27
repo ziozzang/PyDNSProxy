@@ -66,7 +66,7 @@ Matching Rules
 ==============
 
 1. Matchings are sequancial.
-    * Block(No Result Returned) -> Exactly Match(Exactly Same Domain only) -> Forward Match(Ask upper DNS) -> Zone Match -> RegEx Match
+    * Block(No Result Returned) -> Exactly Match(Exactly Same Domain only) -> Forward Match(Ask upper DNS) -> Zone Match -> RegEx Match/Allow -> RegEx Match/Block
 
 2. if one rule matched, ignored remains.
 
@@ -75,7 +75,8 @@ Matching Rules
     * Exact Match: Exact Match
     * Forward : Partial Match
     * Zone : Partial Match
-    * RegEx : RegEx.
+    * RegEx/Allow : RegEx.
+    * RegEx/Block : RegEx.
 
 Special Thanks
 ==============

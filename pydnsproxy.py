@@ -212,12 +212,21 @@ class DNSResponse:
                     logging.debug(">> Matched Request(ZONE): " + query.domain + ":" + ip)
                     break
         if False == match_status:  # RegEx searching.
-            for rule in self.rules.re_list:
+            for rule in self.rules.reallow_list:
                 result = rule[0].match(query.domain)
                 if result is not None:
                     match_status = True
                     ip = rule[1]
-                    logging.debug(">> Matched Request(RE): " + query.domain + ":" + ip)
+                    logging.debug(">> Matched Request(RE/ALLOW): " + query.domain + ":" + ip)
+                    break
+        if False == match_status:  # RegEx searching.
+            for rule in self.rules.reblock_list:
+                result = rule[0].match(query.domain)
+                if result is not None:
+                    match_status = True
+                    result_none = True
+                    logging.debug(">> Matched Request(RE/BLOCK): " + query.domain + ":" + ip)
+                    break
         if (filter_exist_dns and match_status) and (result_none == False):  # Check Really domain exist, if flag set
             try:
                 iptmp = socket.gethostbyname(query.domain)
@@ -255,7 +264,8 @@ class DNSResponse:
 
 class ruleEngine:
     def __init__(self,file):
-        self.re_list = []   # Regular Express
+        self.reallow_list = []   # Regular Express Allow
+        self.reblock_list = []   # Regular Expression Block/Dis-Allow
         self.zone_list = {} # Zone: Startswith *
         self.exact_list = {} # Exact Match Startswith =
         self.block_list = [] # Block Startswith -
@@ -294,9 +304,12 @@ class ruleEngine:
                 elif rule[0] == "=":  # Exact
                     self.exact_list[splitrule[0][1:]] = splitrule[1]
                     logging.debug('>> EXACT: %s -> %s' % (splitrule[0][1:], splitrule[1]))
-                else:  # RegEx
-                    self.re_list.append([re.compile(splitrule[0]),splitrule[1]])
-                    logging.debug('>> RE: %s -> %s' % (splitrule[0], splitrule[1]))
+                elif rule[0] == "~":  # RegEx Allow
+                    self.reallow_list.append([re.compile(splitrule[0][1:]),splitrule[1]])
+                    logging.debug('>> RE/ALLOW: %s -> %s' % (splitrule[0], splitrule[1]))
+                elif rule[0] == "^":  # RegEx Block
+                    self.reblock_list.append([re.compile(splitrule[0][1:]),splitrule[1]])
+                    logging.debug('>> RE/BLOCK: %s -> %s' % (splitrule[0], splitrule[1]))
             n = str(len(rules))
             logging.debug(">> %s rules parsed" % n)
 
