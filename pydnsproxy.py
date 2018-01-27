@@ -172,42 +172,74 @@ class DNSQuery:
 
 # DNS response generating.
 class DNSResponse:
-    def __init__(self, query, re_list, zone_list):
+    def __init__(self, query, rules):
+        self.rules = rules
         self.data = query.data
         self.packet = b''
         ip = None
         match_status = False
-        for rule in zone_list.keys():  # zone searching
+        result_none = False
+
+        for rule in self.rules.block_list:  # zone searching
             if (rule == query.domain[:-1]) or query.domain.endswith("."+rule+"."):
+                logging.debug(">> Matched Request(BLOCK): " + query.domain)
                 match_status = True
-                ip = zone_list[rule]
-                logging.debug(">> Matched Request(ZONE): " + query.domain + ":" + ip)
+                result_none = True
                 break
+        if False == match_status:  # Exact Match
+            for rule in self.rules.exact_list.keys():
+                if rule == query.domain[:-1]:
+                    match_status = True
+                    ip = self.rules.exact_list[rule]
+                    logging.debug(">> Matched Request(EXACT): " + query.domain + ":" + ip)
+                    break
+        if False == match_status:  # Forward Match
+            for rule in self.rules.forw_list:  # zone searching
+                if (rule == query.domain[:-1]) or query.domain.endswith("."+rule+"."):
+                    match_status = True
+                    try:
+                        ip = socket.gethostbyname(query.domain)
+                        logging.debug(">> Matched Request(FORW): " + query.domain + ":" + ip)
+                    except:
+                        result_none = True
+                        logging.debug(">> Matched Request(FORW): " + query.domain + ": FAILED")
+                    break
+        if False == match_status:  # Zone searching.
+            for rule in self.rules.zone_list.keys():  # zone searching
+                if (rule == query.domain[:-1]) or query.domain.endswith("."+rule+"."):
+                    match_status = True
+                    ip = self.rules.zone_list[rule]
+                    logging.debug(">> Matched Request(ZONE): " + query.domain + ":" + ip)
+                    break
         if False == match_status:  # RegEx searching.
-            for rule in re_list:
+            for rule in self.rules.re_list:
                 result = rule[0].match(query.domain)
                 if result is not None:
                     match_status = True
                     ip = rule[1]
                     logging.debug(">> Matched Request(RE): " + query.domain + ":" + ip)
-        if filter_exist_dns and match_status:  # Check Really domain exist, if flag set
+        if (filter_exist_dns and match_status) and (result_none == False):  # Check Really domain exist, if flag set
             try:
                 iptmp = socket.gethostbyname(query.domain)
                 logging.debug(">> Check domain exist.. OK / Real: %s" % iptmp)
             except:
                 ip = None
                 logging.debug(">> Check domain exist.. Failed")
-        if ip is None:  # We didn't find a match, get the real ip
+
+        if ip is None and result_none == False:  # We didn't find a match, get the real ip
             try:
                 ip = socket.gethostbyname(query.domain)
                 logging.debug(">> Unmatched request: " + query.domain + ":" + ip)
             except:  # That domain doesn't appear to exist, build accordingly
                 logging.debug(">> Unable to parse request")
-                # Build the response packet
-                self.packet += self.data[:2] + b'\x81\x83'                         # Reply Code: No Such Name
-                #                                                                  0 answer rrs   0 additional, 0 auth
-                self.packet += self.data[4:6] + b'\x00\x00' + b'\x00\x00\x00\x00'  # Questions and Answers Counts
-                self.packet += self.data[12:]                                      # Original Domain Name Question
+                result_none = True
+
+        if result_none:
+            # Build the response packet
+            self.packet += self.data[:2] + b'\x81\x83'                         # Reply Code: No Such Name
+            #                                                                  0 answer rrs   0 additional, 0 auth
+            self.packet += self.data[4:6] + b'\x00\x00' + b'\x00\x00\x00\x00'  # Questions and Answers Counts
+            self.packet += self.data[12:]                                      # Original Domain Name Question
 
         # Quick Hack
         if self.packet == b'':
@@ -225,6 +257,9 @@ class ruleEngine:
     def __init__(self,file):
         self.re_list = []   # Regular Express
         self.zone_list = {} # Zone: Startswith *
+        self.exact_list = {} # Exact Match Startswith =
+        self.block_list = [] # Block Startswith -
+        self.forw_list = [] # Forward: Startwith >
         logging.debug('>> Parse rules...')
         extip = None
         localip = None
@@ -232,6 +267,14 @@ class ruleEngine:
             rules = rulefile.readlines()
             for rule in rules:
                 if rule[0] == "#": # Process Comment
+                    continue
+                elif rule[0] == "-": # Blocking
+                    self.block_list.append(rule[1:].strip())
+                    logging.debug('>> BLOCK: %s' % (rule[1:].strip(),))
+                    continue
+                elif rule[0] == ">": # Forward
+                    self.forw_list.append(rule[1:].strip())
+                    logging.debug('>> FORWARD: %s' % (rule[1:].strip(),))
                     continue
                 splitrule = rule.split()
                 if(len(splitrule)) <2:
@@ -248,6 +291,9 @@ class ruleEngine:
                 if rule[0] == "*":  # Zone
                     self.zone_list[splitrule[0][1:]] = splitrule[1]
                     logging.debug('>> ZONE: %s -> %s' % (splitrule[0][1:], splitrule[1]))
+                elif rule[0] == "=":  # Exact
+                    self.exact_list[splitrule[0][1:]] = splitrule[1]
+                    logging.debug('>> EXACT: %s -> %s' % (splitrule[0][1:], splitrule[1]))
                 else:  # RegEx
                     self.re_list.append([re.compile(splitrule[0]),splitrule[1]])
                     logging.debug('>> RE: %s -> %s' % (splitrule[0], splitrule[1]))
@@ -263,7 +309,7 @@ class DNSPacketHandler:
         query_res = DNSQuery(data)
         if False == check_client_ip(address[0], query_res.domain):  # Authentication
             return
-        response = DNSResponse(query_res, re_list, zone_list).packet
+        response = DNSResponse(query_res, rules).packet
         self.transport.sendto(response, address)
 
 # DNS Server Class
@@ -333,8 +379,6 @@ if __name__ == '__main__':
         exit()
 
     rules = ruleEngine(path)
-    re_list = rules.re_list
-    zone_list = rules.zone_list
 
     server_dns = DNSServers(ctl, "0.0.0.0", 53)
     server_443 = ProxyServers(ctl, None, 443)
