@@ -324,9 +324,12 @@ class DNSPacketHandler:
         self.transport = transport
 
     def datagram_received(self, data, address):
+        (host, port) = address
         query_res = DNSQuery(data)
         if False == check_client_ip(address[0], query_res.domain):  # Authentication
+            logging.debug('>> [NOT ALLOWED] DNS Request from: %s' % (host,))
             return
+        logging.debug('>> DNS Request from: %s' % (host,))
         response = DNSResponse(query_res, rules).packet
         self.transport.sendto(response, address)
 
